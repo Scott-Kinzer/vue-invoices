@@ -13,3 +13,19 @@ export const useInvoiceModal = defineStore('invoiceModal', {
     }
   },
 })
+
+export const usePopModal = defineStore('popModal', {
+  state: () => {
+    return { isPopModalOpen: false }
+  },
+  actions: {
+    openPopModal() {
+      this.isPopModalOpen = true;
+    },
+    closePopModal() {
+      this.isPopModalOpen = false;
+    }
+  },
+})
+
+
