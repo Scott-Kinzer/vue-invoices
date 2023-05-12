@@ -24,6 +24,9 @@
       </div>
       </div>
     </div>
+    <div>
+      <Invoice v-for="(invoice, index) in invoices" :invoice="invoice" :key="index" />
+    </div>
   </div>
 </template>
 
@@ -31,18 +34,36 @@
 <script lang="ts">
 import { useInvoiceModal } from '@/stores/modal';
 import { onClickOutside, type MaybeElementRef, type MaybeElement } from '@vueuse/core';
+import {db, collection, onSnapshot, query} from '../firebase/firebase.init';
+import Invoice from '../components/Invoice.vue';
 
 
 export default {
+  components: {
+    Invoice,
+  },
   data() {
     const modal = useInvoiceModal();
 
     return {
       openModal: modal.openModal,
       filterMenu: false,
+      invoices: [],
     }
   },
-  mounted() {
+  async mounted() {
+
+    const q = query(collection(db, "invoices"));
+    onSnapshot(q, (querySnapshot) => {
+      const invoices: any = [];
+      querySnapshot.forEach((doc) => {
+        invoices.push(doc.data());
+      });
+
+      this.invoices = invoices;
+    });
+
+
     onClickOutside(this.$refs.target as MaybeElementRef<MaybeElement>, () => {
       this.filterMenu = false;
     }

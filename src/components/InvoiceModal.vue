@@ -153,7 +153,7 @@ import Modal from './Modal.vue';
 import { storeToRefs } from 'pinia';
 import type { Ref } from 'vue';
 
-type Invoice = {
+export type Invoice = {
   isLoading: boolean,
   isShowPopUp: Ref<boolean>,
   dateOptions: { year: "numeric"; month: "short"; day: "numeric" };
@@ -176,6 +176,7 @@ type Invoice = {
   paymentDueDate: string | Date | null;
   productDescription: null | string;
   invoicePending: null | boolean;
+  invoicePaid: null | boolean;
   invoiceDraft: null | boolean;
   invoiceItemList: Array<{
     id: string;
@@ -231,6 +232,7 @@ export default {
             invoiceDateUnix: null,
             invoiceDate: null,
             paymentTerms: '30',
+            invoicePaid: null,
             paymentDueDateUnix: null,
             paymentDueDate: null,
             productDescription: null,
