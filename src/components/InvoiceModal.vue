@@ -9,20 +9,20 @@
                 <h4>Bill from</h4>
                 <div class="input flex flex-column">
                     <label for="billerStreetAddress">Street address</label>
-                    <input required type="text" id="billerStreetAddress" v-model="billerStreetAddress">
+                    <input required type="text" id="billerStreetAddress" v-model="invoice.billerStreetAddress">
                 </div>
                 <div class="location-details flex">
                     <div class="input flex flex-column">
                     <label for="billerCity">City</label>
-                    <input required type="text" id="billerCity" v-model="billerCity">
+                    <input required type="text" id="billerCity" v-model="invoice.billerCity">
                 </div>
                 <div class="input flex flex-column">
                     <label for="billerZipCode">Zip code</label>
-                    <input required type="text" id="billerZipCode" v-model="billerZipCode">
+                    <input required type="text" id="billerZipCode" v-model="invoice.billerZipCode">
                 </div>
                 <div class="input flex flex-column">
                     <label for="billerCountry">Country</label>
-                    <input required type="text" id="billerCountry" v-model="billerCountry">
+                    <input required type="text" id="billerCountry" v-model="invoice.billerCountry">
                 </div>
                 </div>
             </div>
@@ -34,30 +34,30 @@
                 <div class="location-details flex">
                     <div class="input flex flex-column">
                     <label for="clientName">Client name</label>
-                    <input required type="text" id="clientName" v-model="clientName">
+                    <input required type="text" id="clientName" v-model="invoice.clientName">
                 </div>
                 <div class="input flex flex-column">
                     <label for="clientEmail">Client email</label>
-                    <input required type="text" id="clientEmail" v-model="clientEmail">
+                    <input required type="text" id="clientEmail" v-model="invoice.clientEmail">
                 </div>
                 <div class="input flex flex-column">
                     <label for="clientStreetAddress">Street address</label>
-                    <input required type="text" id="clientStreetAddress" v-model="clientStreetAddress">
+                    <input required type="text" id="clientStreetAddress" v-model="invoice.clientStreetAddress">
                 </div>
                 </div>
 
                 <div class="location-details flex">
                     <div class="input flex flex-column">
                     <label for="clientCity">City</label>
-                    <input required type="text" id="clientCity" v-model="clientCity">
+                    <input required type="text" id="clientCity" v-model="invoice.clientCity">
                 </div>
                 <div class="input flex flex-column">
                     <label for="clientZipCode">Zip code</label>
-                    <input required type="text" id="clientZipCode" v-model="clientZipCode">
+                    <input required type="text" id="clientZipCode" v-model="invoice.clientZipCode">
                 </div>
                 <div class="input flex flex-column">
                     <label for="clientCountry">Country</label>
-                    <input required type="text" id="clientCountry" v-model="clientCountry">
+                    <input required type="text" id="clientCountry" v-model="invoice.clientCountry">
                 </div>
                 </div>
             </div>
@@ -67,16 +67,16 @@
                     <div class="payment flex">
                         <div class="input flex flex-column">
                             <label for="invoiceDate">Invoice date</label>
-                            <input disabled type="text" id="invoiceDate" v-model="invoiceDate">
+                            <input disabled type="text" id="invoiceDate" v-model="invoice.invoiceDate">
                         </div>
                         <div class="input flex flex-column">
                             <label for="paymentDueDate">Payment due</label>
-                            <input disabled type="text" id="paymentDueDate" v-model="paymentDueDate">
+                            <input disabled type="text" id="paymentDueDate" v-model="invoice.paymentDueDate">
                         </div>
                     </div>
                 <div class="input flex flex-column">
                     <label for="paymentTerms">Payment terms</label>
-                    <select required type="text" id="paymentTerms" v-model="paymentTerms">
+                    <select required type="text" id="paymentTerms" v-model="invoice.paymentTerms">
                         <option value="30">
                             New 30 Days
                         </option>
@@ -87,7 +87,7 @@
                 </div>
                 <div class="input flex flex-column">
                     <label for="productDescription">Description</label>
-                    <input required type="text" id="productDescription" v-model="productDescription">
+                    <input required type="text" id="productDescription" v-model="invoice.productDescription">
                 </div>
                 </div>
 
@@ -101,7 +101,7 @@
                             <th class="price">Price</th>
                             <th class="total">Total</th>
                         </tr>
-                        <tr class="table-items flex" v-for="(item, index) in invoiceItemList" :key="index">
+                        <tr class="table-items flex" v-for="(item, index) in invoice.invoiceItemList" :key="index">
                             <td class="item-name">
                                 <input type="text" v-model="item.name">
                             </td>
@@ -147,18 +147,14 @@ import { useInvoiceModal } from '@/stores/modal';
 import { usePopModal } from '@/stores/modal';
 import { onClickOutside, type MaybeElementRef, type MaybeElement } from '@vueuse/core';
 import {uid} from 'uid';
-import {db, doc, setDoc, collection, updateDoc, addDoc} from '../firebase/firebase.init';
+import {db, collection, addDoc} from '../firebase/firebase.init';
 import Loading from '../components/Loading.vue';
 import Modal from './Modal.vue';
 import { storeToRefs } from 'pinia';
 import type { Ref } from 'vue';
 
+
 export type Invoice = {
-  isLoading: boolean,
-  isShowPopUp: Ref<boolean>,
-  dateOptions: { year: "numeric"; month: "short"; day: "numeric" };
-  docId: null | string;
-  loading: null | boolean;
   billerStreetAddress: null | string;
   billerCity: null | string;
   billerZipCode: null | string;
@@ -202,8 +198,8 @@ export default {
     });
     },
     created() {
-        this.invoiceDateUnix = Date.now();
-        this.invoiceDate = new Date(this.invoiceDateUnix).toLocaleDateString('en-us', this.dateOptions);
+        this.invoice.invoiceDateUnix = Date.now();
+        this.invoice.invoiceDate = new Date(this.invoice.invoiceDateUnix).toLocaleDateString('en-us', this.dateOptions);
 
         this.updateFutureDate();
     },
@@ -211,14 +207,12 @@ export default {
       const popUpModal = usePopModal();
       const storePopUp = storeToRefs(popUpModal);
 
-      console.log(storePopUp.isPopModalOpen);
-
         return {
             isShowPopUp: storePopUp.isPopModalOpen,
             isLoading: false,
             dateOptions: { year: "numeric", month: "short", day: "numeric" },
-            docId: null,
             loading: null,
+            invoice: {
             billerStreetAddress: null,
             billerCity: null,
             billerZipCode: null,
@@ -240,15 +234,22 @@ export default {
             invoiceDraft: null,
             invoiceItemList: [],
             invoiceTotal: 0,
-        } as Invoice;
+          }
+        } as {
+          invoice: Invoice;  
+          isLoading: boolean; 
+          loading: null | boolean;   
+          dateOptions: { year: "numeric"; month: "short"; day: "numeric" };
+          isShowPopUp: Ref<boolean>;
+          };
     },
     methods: {
         checkClick() {},
         saveDraft() {
-          this.invoiceDraft = true;
+          this.invoice.invoiceDraft = true;
         },
         publishInvoice() {
-          this.invoicePending = true;
+          this.invoice.invoicePending = true;
 
         },
         closeInvoice() {
@@ -256,7 +257,7 @@ export default {
             modal.closeModal()
         },
         addNewInvoiceItem() {
-            this.invoiceItemList.push({
+            this.invoice.invoiceItemList.push({
                 id: uid(),
                 name: "",
                 qty: 0,
@@ -266,7 +267,7 @@ export default {
         },
 
         async uploadInvoice() {
-          if (this.invoiceItemList.length <= 0) {
+          if (this.invoice.invoiceItemList.length <= 0) {
             alert("Please insure you filled out work items");
             return;
           }
@@ -277,26 +278,7 @@ export default {
 
           await addDoc(collection(db, "invoices"), {
             invoiceId: uid(6),
-            billerStreetAddress: this.billerStreetAddress,
-            billerCity: this.billerCity,
-            billerZipCode: this.billerZipCode,
-            billerCountry: this.billerCountry,
-            clientName: this.clientName,
-            clientEmail: this.clientEmail,
-            clientStreetAddress: this.clientStreetAddress,
-            clientCity: this.clientCity,
-            clientZipCode: this.clientZipCode,
-            clientCountry: this.clientZipCode,
-            invoiceDateUnix: this.invoiceDateUnix,
-            invoiceDate: this.invoiceDate,
-            paymentTerms: this.paymentTerms,
-            paymentDueDateUnix: this.paymentDueDateUnix,
-            paymentDueDate: this.paymentDueDate,
-            productDescription: this.productDescription,
-            invoicePending: this.invoicePending,
-            invoiceDraft: this.invoiceDraft,
-            invoiceItemList: this.invoiceItemList,
-            invoiceTotal: this.invoiceTotal,
+            ...this.invoice,
           });
 
           this.closeInvoice();
@@ -306,18 +288,18 @@ export default {
           this.uploadInvoice();
         },
         deleteInvoiceItem(id: string) {
-          this.invoiceItemList = this.invoiceItemList.filter((item) => id !== item.id);
+          this.invoice.invoiceItemList = this.invoice.invoiceItemList.filter((item) => id !== item.id);
         },
         calInvoiceTotal() {
-          this.invoiceTotal = 0;
-          this.invoiceItemList.forEach((item) => {
-            this.invoiceTotal += item.total;
+          this.invoice.invoiceTotal = 0;
+          this.invoice.invoiceItemList.forEach((item) => {
+            this.invoice.invoiceTotal += item.total;
           })
         },
         updateFutureDate() {
             const futureDate = new Date();
-            this.paymentDueDateUnix = futureDate.setDate(futureDate.getDate() + parseInt(this.paymentTerms));
-            this.paymentDueDate = new Date(this.paymentDueDateUnix).toLocaleDateString('en-us', this.dateOptions);
+            this.invoice.paymentDueDateUnix = futureDate.setDate(futureDate.getDate() + parseInt(this.invoice.paymentTerms));
+            this.invoice.paymentDueDate = new Date(this.invoice.paymentDueDateUnix).toLocaleDateString('en-us', this.dateOptions);
         }
     },
     watch: {

@@ -22,13 +22,13 @@
         </div>
         <div class="right flex">
           <button @click="toggleEditInvoice" class="dark-purple">Edit</button>
-          <button @click="deleteInvoice(currentInvoice.docId)" class="red">Delete</button>
-          <button @click="updateStatusToPaid(currentInvoice.docId)" v-if="currentInvoice.invoicePending" class="green">
+          <button @click="deleteInvoice(currentInvoice.invoiceId)" class="red">Delete</button>
+          <button @click="updateStatusToPaid()" v-if="currentInvoice.invoicePending" class="green">
             Mark as Paid
           </button>
           <button
             v-if="currentInvoice.invoiceDraft || currentInvoice.invoicePaid"
-            @click="updateStatusToPending(currentInvoice.docId)"
+            @click="updateStatusToPending()"
             class="orange"
           >
             Mark as Pending
@@ -99,28 +99,59 @@
   </template>
   
   <script lang="ts">
-import { db, query, collection, where, getDocs} from '../firebase/firebase.init';
+import type { Invoice } from '@/components/InvoiceModal.vue';
+import { db, query, collection, where, getDocs, deleteDoc, onSnapshot, updateDoc} from '../firebase/firebase.init';
 
   export default {
     name: "invoiceView",
-    data(): {currentInvoice: any} {
+    data(): {currentInvoice: (Invoice & {invoiceId: string}) | null} {
       return {
         currentInvoice: null,
       };
     },
     async created() {
-        console.log(this.$route.params);
         const q = query(collection(db, "invoices"), where("invoiceId", "==", this.$route.params.invoiceId as string));
 
-        const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-            this.currentInvoice = doc.data();
+        onSnapshot(q, (querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            this.currentInvoice = doc.data() as (Invoice & {invoiceId: string});
         });
+        })
     },
     methods: {
-        deleteInvoice(id: string) {},
-        updateStatusToPending(id: string) {},
-        updateStatusToPaid(id: string) {},
+        async deleteInvoice(id: string) {
+          
+          const querySnapshot = await getDocs(
+          query(collection(db, "invoices"), where('invoiceId', "==", id))
+        );
+
+        querySnapshot.forEach(async (doc) => {
+          await deleteDoc(doc.ref);
+        });
+
+        this.$router.push('/');
+
+        },
+        async updateStatusToPending() {
+          const q = query(collection(db, "invoices"), where("invoiceId", "==", this.$route.params.invoiceId as string));
+          const querySnapshot = await getDocs(q);
+          querySnapshot.forEach(async (doc) => {
+            await updateDoc(doc.ref, {
+            invoicePaid: false,
+            invoicePending: true,
+        });
+      });
+        },
+       async updateStatusToPaid() {
+        const q = query(collection(db, "invoices"), where("invoiceId", "==", this.$route.params.invoiceId as string));
+        const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(async (doc) => {
+            await updateDoc(doc.ref, {
+              invoicePaid: true,
+              invoicePending: false,
+          });
+        });
+        },
         toggleEditInvoice() {},
     }
   };
