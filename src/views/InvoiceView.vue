@@ -101,6 +101,7 @@
   <script lang="ts">
 import type { Invoice } from '@/components/InvoiceModal.vue';
 import { db, query, collection, where, getDocs, deleteDoc, onSnapshot, updateDoc} from '../firebase/firebase.init';
+import { useInvoiceModal, useModalDetails } from '@/stores/modal';
 
   export default {
     name: "invoiceView",
@@ -152,7 +153,17 @@ import { db, query, collection, where, getDocs, deleteDoc, onSnapshot, updateDoc
           });
         });
         },
-        toggleEditInvoice() {},
+        toggleEditInvoice() {
+          const { setInvoice } = useModalDetails();
+          const { openModal } = useInvoiceModal();
+
+          if (this.currentInvoice) {
+            setInvoice(JSON.parse(JSON.stringify(this.currentInvoice)));
+          }
+
+          openModal();
+
+        },
     }
   };
   </script>

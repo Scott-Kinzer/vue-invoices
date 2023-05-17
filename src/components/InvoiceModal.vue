@@ -133,8 +133,11 @@
                     <button type="submit" @click="saveDraft" class="dark-purple">
                         Save draft
                     </button>
-                    <button type="submit" @click="publishInvoice" class="purple">
+                    <button v-if="!invoice.invoiceId" type="submit" @click="publishInvoice" class="purple">
                         Create Invoice
+                    </button>
+                    <button v-if="invoice.invoiceId" type="submit" @click="publishInvoice" class="purple">
+                        Edit Invoice
                     </button>
                 </div>
             </div>
@@ -143,11 +146,11 @@
 </template>
 
 <script lang="ts">
-import { useInvoiceModal } from '@/stores/modal';
+import { useInvoiceModal, useModalDetails } from '@/stores/modal';
 import { usePopModal } from '@/stores/modal';
 import { onClickOutside, type MaybeElementRef, type MaybeElement } from '@vueuse/core';
 import {uid} from 'uid';
-import {db, collection, addDoc} from '../firebase/firebase.init';
+import {db, collection, addDoc, query, where, getDocs, updateDoc} from '../firebase/firebase.init';
 import Loading from '../components/Loading.vue';
 import Modal from './Modal.vue';
 import { storeToRefs } from 'pinia';
@@ -206,37 +209,16 @@ export default {
     data() {
       const popUpModal = usePopModal();
       const storePopUp = storeToRefs(popUpModal);
+      const { invoiceInfo } = useModalDetails();
 
         return {
             isShowPopUp: storePopUp.isPopModalOpen,
             isLoading: false,
             dateOptions: { year: "numeric", month: "short", day: "numeric" },
             loading: null,
-            invoice: {
-            billerStreetAddress: null,
-            billerCity: null,
-            billerZipCode: null,
-            billerCountry: null,
-            clientName: null,
-            clientEmail: null,
-            clientStreetAddress: null,
-            clientCity: null,
-            clientZipCode: null,
-            clientCountry: null,
-            invoiceDateUnix: null,
-            invoiceDate: null,
-            paymentTerms: '30',
-            invoicePaid: null,
-            paymentDueDateUnix: null,
-            paymentDueDate: null,
-            productDescription: null,
-            invoicePending: null,
-            invoiceDraft: null,
-            invoiceItemList: [],
-            invoiceTotal: 0,
-          }
+            invoice: invoiceInfo
         } as {
-          invoice: Invoice;  
+          invoice: (Invoice & {invoiceId: string});  
           isLoading: boolean; 
           loading: null | boolean;   
           dateOptions: { year: "numeric"; month: "short"; day: "numeric" };
@@ -250,7 +232,6 @@ export default {
         },
         publishInvoice() {
           this.invoice.invoicePending = true;
-
         },
         closeInvoice() {
             const modal = useInvoiceModal();
@@ -276,10 +257,20 @@ export default {
 
           this.calInvoiceTotal();
 
-          await addDoc(collection(db, "invoices"), {
-            invoiceId: uid(6),
+          if (!this.invoice.invoiceId) {
+            await addDoc(collection(db, "invoices"), {
             ...this.invoice,
+            invoiceId: uid(6),
           });
+          } else {
+            const q = query(collection(db, "invoices"), where("invoiceId", "==", this.$route.params.invoiceId as string));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(async (doc) => {
+            await updateDoc(doc.ref, {
+              ...this.invoice,
+              });
+            });
+          }
 
           this.closeInvoice();
 
