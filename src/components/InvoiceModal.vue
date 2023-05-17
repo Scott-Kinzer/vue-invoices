@@ -130,13 +130,13 @@
                     </button>
                 </div>
                 <div class="right flex">
-                    <button type="submit" @click="saveDraft" class="dark-purple">
+                    <button @click="saveDraft" type="button" class="dark-purple"  :class="{ 'is-draft': invoice.invoiceDraft }">
                         Save draft
                     </button>
-                    <button v-if="!invoice.invoiceId" type="submit" @click="publishInvoice" class="purple">
+                    <button v-if="!invoice.invoiceId" type="submit" class="purple">
                         Create Invoice
                     </button>
-                    <button v-if="invoice.invoiceId" type="submit" @click="publishInvoice" class="purple">
+                    <button v-if="invoice.invoiceId" type="submit" class="purple">
                         Edit Invoice
                     </button>
                 </div>
@@ -228,10 +228,14 @@ export default {
     methods: {
         checkClick() {},
         saveDraft() {
-          this.invoice.invoiceDraft = true;
+          this.invoice.invoiceDraft = !this.invoice.invoiceDraft;
+          this.invoice.invoicePending = false;
+          this.invoice.invoicePaid = false;
         },
         publishInvoice() {
           this.invoice.invoicePending = true;
+          this.invoice.invoiceDraft = false;
+          this.invoice.invoicePaid = false;
         },
         closeInvoice() {
             const modal = useInvoiceModal();
@@ -297,9 +301,6 @@ export default {
         paymentTerms() {
             this.updateFutureDate();
         },
-        isShowPopUp() {
-          console.log(this.isShowPopUp);
-        }
     }
 }
 
@@ -478,5 +479,9 @@ export default {
     &:focus {
       outline: none;
     }
+  }
+
+  .is-draft {
+    background-color: green !important;
   }
 </style>

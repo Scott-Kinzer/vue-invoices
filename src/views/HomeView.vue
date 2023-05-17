@@ -10,10 +10,10 @@
         <s>Filter by status</s>
         <img src="@/assets/icon-arrow-down.svg" alt="">
         <ul ref="target" v-show="!!filterMenu" class="filter-menu">
-          <li>Draft</li>
-          <li>Pending</li>
-          <li>Paid</li>
-          <li>Clear filter</li>
+          <li @click="setFilter('invoiceDraft')">Draft</li>
+          <li @click="setFilter('invoicePending')">Pending</li>
+          <li @click="setFilter('invoicePaid')">Paid</li>
+          <li @click="setFilter('')">Clear filter</li>
         </ul>
       </div>
       <div @click="newInvoice" class="button flex">
@@ -34,7 +34,7 @@
 <script lang="ts">
 import { useInvoiceModal } from '@/stores/modal';
 import { onClickOutside, type MaybeElementRef, type MaybeElement } from '@vueuse/core';
-import {db, collection, onSnapshot, query} from '../firebase/firebase.init';
+import {db, collection, onSnapshot, query, getDocs} from '../firebase/firebase.init';
 import Invoice from '../components/Invoice.vue';
 
 
@@ -46,6 +46,7 @@ export default {
     const modal = useInvoiceModal();
 
     return {
+      filterBy: '',
       openModal: modal.openModal,
       filterMenu: false,
       invoices: [],
@@ -73,11 +74,34 @@ export default {
       this.openModal();
     },
 
+    setFilter(filterBy: string) {
+      this.filterBy = filterBy;
+    },
     toggleFilterMenu() {
-      console.log('xx');
       this.filterMenu = !this.filterMenu;
     }
-  }
+  },
+  watch: {
+        async filterBy() {
+          if (!this.filterBy) {
+            const querySnapshot = await getDocs(collection(db, "invoices"));
+            const invoices: any = [];
+
+            querySnapshot.forEach((doc) => {
+              invoices.push(doc.data());
+            });
+
+            this.invoices = invoices;
+
+            return;
+          } 
+            const firstInvoices = this.invoices.filter((invoice) => !!invoice[this.filterBy]);
+            const secondInvoices = this.invoices.filter((invoice) => !invoice[this.filterBy]);
+
+            this.invoices = [...firstInvoices, ...secondInvoices];
+
+        },
+    }
 }
 </script>
 
